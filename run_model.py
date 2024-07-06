@@ -1,7 +1,8 @@
 import argparse
 import multiprocessing as mp
 from itertools import chain, combinations
-from model import CityModel, lista_distritos, dummy_norms
+from model import CityModel, lista_distritos
+from data import all_norms
 
 parser = argparse.ArgumentParser(description="Run a sample of models.")
 parser.add_argument('-P', default='.', type=str, help="Path to save results")
@@ -22,14 +23,15 @@ def powerset(s):
 def run_model(I):
     process_id = mp.current_process().pid
 
-    for index, norm_config in enumerate(powerset(dummy_norms)):
+    for index, norm_config in enumerate(powerset(all_norms)):
+        norms_indicator = f"{index}:{'-'.join([str(all_norms.index(norm)) for norm in norm_config])}"
         for i in range(I):
             barcelona = CityModel('Barcelona', lista_distritos, N, norm_config)
             for _ in range(T):
                 barcelona.step()
-            
+
             # collect and save data
-            run_id = f"{process_id}_{index}_{i}"
+            run_id = f"{process_id}_{norms_indicator}_{i}"
             model_vars_df = barcelona.datacollector.get_model_vars_dataframe()
             agent_vars_df = barcelona.datacollector.get_agent_vars_dataframe()
             model_vars_df.to_csv(f"{path}/model_vars_{run_id}.csv", sep=';')
@@ -38,9 +40,11 @@ def run_model(I):
 
 if __name__ == '__main__':
 
-    n_cpus = mp.cpu_count()
-    load_per_core = M // n_cpus
+    # n_cpus = mp.cpu_count()
+    # load_per_core = M // n_cpus
 
-    pool = mp.Pool(n_cpus)
-    _ = pool.starmap(run_model, [(load_per_core,)]*n_cpus)
-    pool.close()
+    # pool = mp.Pool(n_cpus)
+    # _ = pool.starmap(run_model, [(load_per_core,)]*n_cpus)
+    # pool.close()
+
+    run_model(M)

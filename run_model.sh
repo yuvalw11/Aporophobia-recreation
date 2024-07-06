@@ -18,7 +18,7 @@
 
 
 mkdir $1
-python3 run_model.py -P $1
+/home/nmontes/.conda/envs/aporo/bin/python run_model.py -P $1
 
 
 # submit this script to the cluster from /home/nmontes/Aporophobia directory

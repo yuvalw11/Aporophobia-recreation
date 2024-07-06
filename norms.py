@@ -1,28 +1,5 @@
-# # Regulative environment
-# class Norm:
-#     def __init__(self, attribute, deontic, aim, condition=None, or_else=None):
-#         self.attribute = attribute
-#         self.deontic = deontic
-#         self.aim = aim
-#         self.condition = condition
-#         self.or_else = or_else
-#         #self.apo = None #indicador Yes or No
-
-#     def __str__(self):
-#         norm_str = f"{self.attribute} {self.deontic} {self.aim} {self.condition} "
-#         if self.or_else:
-#             norm_str += f", then {self.or_else}"
-#         return norm_str
-
-# # Example norms
-# norm_homeless = Norm("Anyone", "can", "enter the social emergency program", "if they have lost their home")
-# norm_min_income = Norm("Anyone with home address and residency in Spain and a bank account", "can", "apply for minimal vital income")
-
-#print(norm_homeless.condition)
-
 from typing import List
 
-# IMPORTANT do not name any other variable as agx
 agx = None
 
 class Norm:
@@ -46,31 +23,164 @@ class Norm:
     def __str__(self) -> str:
         return f"if {self.precondition} then {', '.join(self.postcondition)}"
 
+#SAT
+needs_list = ["food", "shelter", "sleep", "health", "clothing", "financial security", "employment", "education", "family", "friendship", "intimacy", "freedom", "status", "self-esteem"]
+actions_dict = {
+        'retired': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"],
+        'employed': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"], #"go_work",
+        'unemployed': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison", "invest_education"],
+        'student': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"], #"go_study",
+        'homeless': ["go_grocery","go_hospital", "go_shopping", "go_leisure", "invest_education", "sleep_street", "beg", "steal_food", "steal_clothes", "go_reception_center", "go_prison"]
+        }
+
+SAT_matrices = {}
+
+for status, actions in actions_dict.items():
+    SAT_matrix = [[0.0 for _ in range(len(actions))] for _ in range(len(needs_list))]
+    for i, need in enumerate(needs_list):
+        for j, action in enumerate(actions):
+            # Assign specific SAT values based on need-action pairs
+            # tunegem per diferenciar employed de retired
+
+            # FOOD
+            if need == "food" and action == "go_grocery":
+                SAT_matrix[i][j] = 1.0
+            if need == "food" and action == "go_home":
+                SAT_matrix[i][j] = 0.15
+            elif need == "food" and action == "steal_food":
+                SAT_matrix[i][j] = 0.7
+            elif need == "food" and action == "go_reception_center":
+                SAT_matrix[i][j] = 0.5
+            elif need == "food" and action == "beg":
+                SAT_matrix[i][j] = 0.15
+            elif need == "food" and action == "go_leisure":
+                SAT_matrix[i][j] = 0.4
 
 
+            # SHELTER
+            if need == "shelter" and action == "go_home":
+                SAT_matrix[i][j] = 1.0
+            elif need == "shelter" and action == "go_reception_center":
+                SAT_matrix[i][j] = 0.7
 
-if __name__ == '__main__':
+            # SLEEP
+            if need == "sleep" and action == "go_home":
+                SAT_matrix[i][j] = 0.2
+            elif need == "sleep" and action == "sleep_street":
+                SAT_matrix[i][j] = 0.7
 
-    # example norm: if an agent's income is less that 50 units, the agent
-    # receives 10 units of income
-    norm = Norm("agx.income < 50", ["agx.income += 10"])
-    print(norm)
+            # CLOTHING
+            if need == "clothing" and action == "go_shopping":
+                SAT_matrix[i][j] = 1.0
+            elif need == "clothing" and action == "steal_clothes":
+                SAT_matrix[i][j] = 0.8
+
+            # HEALTH
+            if need == "health" and action == "go_hospital":
+                SAT_matrix[i][j] = 1.0
+            elif need == "health" and action == "go_grocery":
+                SAT_matrix[i][j] = 0.3
+            if status == "retired":
+                if need == "health" and action == "go_hospital":
+                    SAT_matrix[i][j] = 0.9
+
+            # FINANCIAL SECURITY and EMPLOYMENT and EDUCATION
+            #if need in ["financial security", "employment", "education"] and (action == "go_work" or action == "invest_education"):
+                #SAT_matrix[i][j] = 1.0
+            if need in ["financial security", "employment"] and action in ["invest_education", "beg"]:
+                SAT_matrix[i][j] = 0.5
+            elif need == "education" and action == "invest_education":
+                SAT_matrix[i][j] = 1.0
+
+            # FAMILY and FRIENDSHIP
+            if need == "family" and action == "go_home":
+                SAT_matrix[i][j] = 0.8
+            if status != "homeless":
+                if need == "family" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.3
+                if need == "friendship" and action == "go_leisure":
+                    SAT_matrix[i][j] = 1.0
+            elif status == "homeless":
+                if need == "friendship" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.4
+            #elif need == "friendship" and action == "go_work":
+                #SAT_matrix[i][j] = 0.2
+            #elif need == "friendship" and action == "go_study":
+                #SAT_matrix[i][j] = 0.3
+
+            # INTIMACY
+            if need == "intimacy" and action == "go_home":
+                SAT_matrix[i][j] = 0.8
+            elif need == "intimacy" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.5
+            if status == "employed":
+                if need == "intimacy" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.7
+            elif status == "student":
+                if need == "intimacy" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.8
+            elif status == "homeless":
+                if need == "intimacy" and action == "go_reception_center":
+                    SAT_matrix[i][j] = 0.3
+                elif need == "intimacy" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.1
+
+            # FREEDOM
+            if need == "freedom" and action == "go_home":
+                SAT_matrix[i][j] = 0.15
+            elif need == "freedom" and action == "go_leisure":
+                SAT_matrix[i][j] = 0.7
+            elif need == "freedom" and action == "beg":
+                SAT_matrix[i][j] = 0.4
+            if status != "retired":
+                if need == "freedom" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.9
+            elif status == "homeless":
+                if need == "freedom" and action == "invest_education":
+                    SAT_matrix[i][j] = 0.4
+                if need == "freedom" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.3
+            elif status == "student":
+                if need == "freedom" and action == "go_shopping":
+                    SAT_matrix[i][j] = 0.5
 
 
-    # very stupid agent class that only has income variable
-    # only for example purposes
-    class DummyAgent:
-        def __init__(self, income):
-            self.income= income
+            # STATUS
+            if need == "status" and action == "go_work":
+                SAT_matrix[i][j] = 0.19
+            elif need == "status" and action == "go_leisure":
+                SAT_matrix[i][j] = 0.7
+            elif need == "status" and action == "beg":
+                SAT_matrix[i][j] = 0.6
+            elif need == "status" and action == "invest_education":
+                    SAT_matrix[i][j] = 0.5
+            if status == "homeless":
+                if need == "status" and action == "invest_education":
+                    SAT_matrix[i][j] = 0.6
+            elif status == "unemployed":
+                if need == "status" and action == "invest_education":
+                    SAT_matrix[i][j] = 0.7
+                if need == "status" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.5
 
+            # SELF-ESTEEM
+            if need == "self-esteem" and (action == "go_leisure" or action == "go_shopping" or action == "go_work"):
+                SAT_matrix[i][j] = 0.5
+            if status == "student":
+                if need == "self-esteem" and action == "go_shopping":
+                    SAT_matrix[i][j] = 0.8
+                elif need == "self-esteem" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.6
+            elif status != "student":
+                if need == "self-esteem" and action == "go_shopping":
+                    SAT_matrix[i][j] = 0.6
+                if need == "self-esteem" and action == "steal_clothes":
+                    SAT_matrix[i][j] = 0.6
+            elif status == "employed":
+                if need == "self-esteem" and action == "go_leisure":
+                    SAT_matrix[i][j] = 0.6
+            elif status == "unemployed":
+                if need == "self-esteem" and action == "invest_education":
+                    SAT_matrix[i][j] = 0.5
 
-    alice = DummyAgent(60)
-    norm_applies_to_alice = norm.check_precondition(alice)
-    print(f"Does the norm apply to alice? {norm_applies_to_alice}\n")
-
-    bob = DummyAgent(40)
-    norm_applies_to_bob = norm.check_precondition(bob)
-    print(f"Does the norm apply to bob? {norm_applies_to_bob}\n")
-    print("Since the norm applies to bob, we are now going to apply the postcondition of the norm to bob.")
-    norm.apply_postcondition(bob)
-    print(f"Bob's income now is {bob.income}")
+    SAT_matrices[status] = SAT_matrix
