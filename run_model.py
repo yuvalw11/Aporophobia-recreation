@@ -27,7 +27,8 @@ def run_model(I):
         norms_indicator = f"{index}:{'-'.join([str(all_norms.index(norm)) for norm in norm_config])}"
         for i in range(I):
             barcelona = CityModel('Barcelona', lista_distritos, N, norm_config)
-            for _ in range(T):
+            for j in range(T):
+                print(f'step {j}/{T} simulation id: {process_id}:{i}, norms config: {norms_indicator}')
                 barcelona.step()
 
             # collect and save data
@@ -46,5 +47,3 @@ if __name__ == '__main__':
     pool = mp.Pool(n_cpus)
     _ = pool.starmap(run_model, [(load_per_core,)]*n_cpus)
     pool.close()
-
-    run_model(M)
