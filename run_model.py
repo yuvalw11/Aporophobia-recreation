@@ -19,11 +19,14 @@ N, T, M = args.N, args.T, args.M
 def powerset(s):
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
+def from_combinations(norms, combinations):
+    return [[norms[i] for i in combination] for combination in combinations]
+
 
 def run_model(I):
     process_id = mp.current_process().pid
 
-    for index, norm_config in enumerate(powerset(all_norms)):
+    for index, norm_config in enumerate(from_combinations(all_norms, [[], [0], [1], [2], [3] ,[4], [5]])):
         norms_indicator = f"{index}:{'-'.join([str(all_norms.index(norm)) for norm in norm_config])}"
         for i in range(I):
             barcelona = CityModel('Barcelona', lista_distritos, N, norm_config)
@@ -39,11 +42,15 @@ def run_model(I):
             agent_vars_df.to_csv(f"{path}/agent_vars_{run_id}.csv", sep=';')
 
 
+def distribute(runs, cpus):
+    base, extra = divmod(runs, cpus)
+    return [base + (i < extra) for i in range(cpus)]
+
+
 if __name__ == '__main__':
 
     n_cpus = mp.cpu_count()
-    load_per_core = M // n_cpus
 
     pool = mp.Pool(n_cpus)
-    _ = pool.starmap(run_model, [(load_per_core,)]*n_cpus)
+    _ = pool.map(run_model, distribute(M, n_cpus))
     pool.close()
