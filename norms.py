@@ -7,6 +7,7 @@ class Norm:
     def __init__(self, precondition: str, postcondition: List[str]) -> None:
         self.precondition = precondition
         self.postcondition = postcondition
+        self.count = 0
 
     def check_precondition(self, ag) -> bool:
         agx = ag
@@ -19,6 +20,7 @@ class Norm:
         for statement in self.postcondition:
             exec(statement)
         agx = None
+        self.count += 1
 
     def __str__(self) -> str:
         return f"if {self.precondition} then {', '.join(self.postcondition)}"

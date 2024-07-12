@@ -1,4 +1,5 @@
 import argparse
+import pathlib
 import multiprocessing as mp
 from itertools import chain, combinations
 from model import CityModel, lista_distritos
@@ -26,9 +27,13 @@ def from_combinations(norms, combinations):
 def run_model(I):
     process_id = mp.current_process().pid
 
-    for index, norm_config in enumerate(from_combinations(all_norms, [[], [0], [1], [2], [3] ,[4], [5]])):
+    for index, norm_config in enumerate(from_combinations(all_norms, [[],[0],[1],[2],[3],[4],[5],[0,1,2],[3,4,5]])):
         norms_indicator = f"{index}:{'-'.join([str(all_norms.index(norm)) for norm in norm_config])}"
         for i in range(I):
+
+            for norm in norm_config:
+                norm.count = 0
+
             barcelona = CityModel('Barcelona', lista_distritos, N, norm_config)
             for j in range(T):
                 print(f'step {j}/{T} simulation id: {process_id}:{i}, norms config: {norms_indicator}')
@@ -40,6 +45,9 @@ def run_model(I):
             agent_vars_df = barcelona.datacollector.get_agent_vars_dataframe()
             model_vars_df.to_csv(f"{path}/model_vars_{run_id}.csv", sep=';')
             agent_vars_df.to_csv(f"{path}/agent_vars_{run_id}.csv", sep=';')
+
+            for norm in norm_config:
+                pathlib.Path(f'{path}/Norm Config: {norms_indicator} Norm: {all_norms.index(norm)} RunID:{i}.txt').write_text(str(norm.count))
 
 
 def distribute(runs, cpus):

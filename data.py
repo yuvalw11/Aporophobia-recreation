@@ -56,9 +56,9 @@ def assign_district():
 needs_list = ["food", "shelter", "sleep", "health", "clothing", "financial security", "employment", "education", "family", "friendship", "intimacy", "freedom", "status", "self-esteem"]
 actions_dict = {
         'retired': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"],
-        'employed': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"], #"go_work",
+        'employed': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison", "go_work"], #"go_work",
         'unemployed': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison", "invest_education"],
-        'student': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison"], #"go_study",
+        'student': ["go_home", "go_grocery", "go_hospital", "go_shopping", "go_leisure", "steal_food", "steal_clothes", "go_prison", "go_study"], #"go_study",
         'homeless': ["go_grocery","go_hospital", "go_shopping", "go_leisure", "invest_education", "sleep_street", "beg", "steal_food", "steal_clothes", "go_reception_center", "go_prison"]
         }
 
@@ -296,12 +296,12 @@ needs = {
 
 all_norms = [
         Norm("agx.status == \"unemployed\" and agx.model.schedule.time % 720 == 0", ["agx.wealth += 700"]), #ATUR (s'ha d'afegir que hagi cotitzat)
-        Norm("agx.status == \"homeless\" and agx.model.schedule.time % 720 == 0", ["agx.status = \"unemployed\"", "agx.sat = SAT_matrices[agx.status]"]),   #Projecte de norma (no en vigor)
+        Norm("agx.wealth <= 0 and agx.model.schedule.time % 720 == 0", ["agx.wealth += 735"]), #minimal vital income
+        Norm("agx.status == \"homeless\" and agx.model.schedule.time % 720 == 0", ["agx.status = \"unemployed\"", "agx.home == agx.model.districts[agx.district].generate_tuples(1, (0, 9), (0, 9))", "agx.sat = SAT_matrices[agx.status]"]),   #Projecte de norma (no en vigor)
+        # Norm("agx.status == \"homeless\" and agx.model.schedule.time % 720 == 0", ["agx.status = \"unemployed\"",  "agx.sat = SAT_matrices[agx.status]"]),   #Projecte de norma (no en vigor)
         Norm("agx.chosenaction in [\"steal_food\", \"steal_clothes\", \"sleep_street\"] and agx.wealth > 0", ["agx.wealth -= 500"]),
         Norm("agx.chosenaction in [\"steal_food\", \"steal_clothes\", \"sleep_street\"] and agx.wealth <= 0", ["agx.go_prison()", "agx.wealth -= 500"]), #consequencies preso?
         Norm("agx.wealth <= 0 and agx.model.schedule.time % 720 == 0" , ["agx.home = None", "agx.status = \"homeless\"", "agx.sat = SAT_matrices[agx.status]"]),  #Eviction for rent
-        Norm("agx.wealth <= 0 and agx.model.schedule.time % 720 == 0", ["agx.wealth += 735"]), #minimal vital income
-
     ]
 
 #Norm("agx.status == \"homeless\"", ["agx.go_reception_center()"]), #Ja feta en les propies available actions: puc fer que no estigui available l'acció com a contranorma.
