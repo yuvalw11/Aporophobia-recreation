@@ -16,7 +16,7 @@ class Apo_Agent(mesa.Agent):
         self.age = None
         self.district = district
         self.wealth = 0
-        self.income = None
+        self.income = 0
         self.depth = 0
         self.status = None
         self.gender = None

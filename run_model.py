@@ -27,7 +27,9 @@ def from_combinations(norms, combinations):
 def run_model(I):
     process_id = mp.current_process().pid
 
-    for index, norm_config in enumerate(from_combinations(all_norms, [[],[0],[1],[2],[3],[4],[5],[0,1,2],[3,4,5]])):
+# from_combinations(all_norms, [[],[0],[1],[2],[3],[4],[5],[0,1,2],[3,4,5]])
+
+    for index, norm_config in enumerate(powerset(all_norms)):
         norms_indicator = f"{index}:{'-'.join([str(all_norms.index(norm)) for norm in norm_config])}"
         for i in range(I):
 
